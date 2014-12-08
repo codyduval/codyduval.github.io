@@ -1,0 +1,23 @@
+---
+layout:     post
+title:      "On Classrooms and Craft"
+date:       2013-07-06 
+summary:    "Is there an ideal environment to become better a craft (like programming)?"
+categories:
+---
+A few days ago, Jeff Casimir (co-founder of the programming school Hungry Academy) [wondered out-loud on Twitter](https://twitter.com/j3/status/352620339706081281) if Hacker School should be calling itself a "school", since they have no fixed curricula. In that vein, and perhaps a little snidely, he suggested that Hacker School call itself a "gym" rather than a "school." <del>I don't have any direct experience with either Hungry Academy or Hacker School</del><ins>(I wrote this in July of 2013, prior to being accepted into Hacker School's Winter 2014 batch. My thoughts have evolved on this topic, but generally remain the same)</ins>, but Jeff's comment did make me reflect on my own experiences with learning to program in Ruby. Or, how important is a syllabus, curriculum, and traditional teacher-in-front-of-the-classroom when learning a craft? *More specifically, what is the best way to learn how to program with the goal of working as a professional developer?*
+
+###Structured vs. Self-Directed
+Hungry Academy is a player in the relatively new (and booming) business of for-profit programming boot camps. Unlike a more traditional technical school or Computer Science program at a 4-year university, these boot camps typically run 8-hours a day for 8 to 15 weeks and make a seductive promise: give them undivided time and attention for the term of the program, and they'll take someone with no programming skills and turn them into a professional software developer. Like its competitors (eg, the Flatiron School, Dev Bootcamp, gSchool, and many more) Hungry Academy is opinionated about the technology stack they teach (usually Rails) and the skills they expect their students to master by graduation. In other words, they have a curriculum.
+
+Hacker School, on the other hand, does not prescribe that its students master a specific tech stack. And unlike Hungry Academy and its ilk, you must already know how to program before applying - they compare themselves to a "writers' workshop", where professionals go to learn from their peers. Students meet with the Hacker School staff to chart a path toward whatever they want to learn (as long as its related to programming), but there is no fixed curriculum.
+
+I'm not in a position to comment on the specific merits of either program, but I think there is some utility in comparing their general approaches. In other words, if you had 12 weeks of free time to dedicate to getting better at a craft, which approach would you prefer? A self-directed salon atmosphere where you learn at your own pace and from your peers? Or a structured classroom environment where you're learning the same thing as everyone else and at (basically) the same pace?
+
+###Classrooms vs Workshops
+On first blush, I think most folks would opt for the structured classroom environment a la Hungry Academy - especially if they're starting from zero on a scary topic like computer programming. After all, that's the model that is most like the schools we all went through (with a professor up front and syllabus in hand). But just because it's the most familiar model doesn't mean it's the best. I'd wager that this traditional classroom model continues to be the standard not because it's the best way to teach and learn, but because it's the model that scales.
+
+For academic and more general knowledge (ie, the so-called Liberal Arts), a classroom environment makes all the sense in the world. But what about for trades like plumbing, carpentry, cutting hair, or... programming? For generations, trades (and craft) have typically been taught via guild systems, where more experienced trades-people pass down skills on-the-job. And when apprentices can't learn on-the-job, they practice their skills in the garage or workshop. Through hundreds of iterations of trial-and-error, decent turns into good, and good eventually becomes excellent.
+
+###And So...
+I'm (at best), a self-taught intermediate Rails monkey. But as someone who has recently slogged through the trenches of learning Ruby (and Rails) from zero, I can say that almost all of my learning came from a workshop/self-directed approach. That is, I started building apps that were useful to me (and me, alone, likely), and with each go I became progressively better. Throughout that process I leaned on others who were more experienced than me for guidance. And so, while I think a classroom will always have merit for giving someone the lay of the land, to really learn a craft you must go... and do.

@@ -1,16 +1,18 @@
 # Site settings
-title:       Pixyll
-email:       your_email@example.com
-author:      John Otander
-description: "A simple, beautiful theme for Jekyll that emphasizes content rather than aesthetic fluff."
+title:       "codyduval#blog"
+email:       cody.duval@gmail.com
+author:      Cody Duval
+description: "Dear diary... "
 baseurl:     ""
-url:         "http://pixyll.com"
+# baseurl:     "http://blog.codyduval.com"
+url:         ""
+# url:         "http://blog.codyduval.com"
 
 # Google analytics
 google_analytics:
 
 # Optional features
-animated:           false
+animated:           true
 show_related_posts: false
 show_post_footers:  false
 
