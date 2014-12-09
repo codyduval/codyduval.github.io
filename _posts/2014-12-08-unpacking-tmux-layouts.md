@@ -1,7 +1,7 @@
 ---
 layout:     post
 title:      "Unpacking Tmux Layouts, Part 1"
-date:       2013-11-01
+date:       2014-12-08
 summary:    "A dive into the Tmux source to understand how it draws custom layouts. In Part 1, decoding the layout config string!"
 categories: bash
 ---
