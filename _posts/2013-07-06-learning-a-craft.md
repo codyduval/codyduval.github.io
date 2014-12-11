@@ -2,7 +2,7 @@
 layout:     post
 title:      "On Classrooms and Craft"
 date:       2013-07-06 
-summary:    "Is there an ideal environment to become better a craft (like programming)?"
+summary:    "Is there an ideal environment to become better at a craft (like programming)?"
 categories:
 ---
 A few days ago, Jeff Casimir (co-founder of the programming school Hungry Academy) [wondered out-loud on Twitter](https://twitter.com/j3/status/352620339706081281) if Hacker School should be calling itself a "school", since they have no fixed curricula. In that vein, and perhaps a little snidely, he suggested that Hacker School call itself a "gym" rather than a "school." <del>I don't have any direct experience with either Hungry Academy or Hacker School</del><ins>(I wrote this in July of 2013, prior to being accepted into Hacker School's Winter 2014 batch. My thoughts have evolved on this topic, but generally remain the same)</ins>, but Jeff's comment did make me reflect on my own experiences with learning to program in Ruby. Or, how important is a syllabus, curriculum, and traditional teacher-in-front-of-the-classroom when learning a craft? *More specifically, what is the best way to learn how to program with the goal of working as a professional developer?*
