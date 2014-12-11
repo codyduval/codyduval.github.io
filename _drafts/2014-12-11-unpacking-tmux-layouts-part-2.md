@@ -1,13 +1,20 @@
 ---
 layout:     post
-title:      "Unpacking Tmux Layouts, Part 1"
-date:       2014-12-08
-summary:    "A dive into the Tmux source to understand how it draws custom layouts. In Part 1, decoding the layout config string!"
+title:      "Unpacking Tmux Layouts, Part 2"
+date:       2014-12-11
+summary:    "Building a better API for building custom layouts in Tmux. In Part 2, re-building the layout string in Ruby!"
 categories: tmux
 ---
-I'm a huge fan of Tmux + Vim when developing in the terminal (if you're not familiar with Tmux, [Daniel Miessler](http://danielmiessler.com/study/tmux/) has a great tutorial on the basics). One of Tmux's best features is its ability to split your screen in multiple "panes", each running it's own bash instance.  This allows you to develop in one pane while running a REPL and your tests in another, all without jumping between tabs or windows.  
+In [Part 1](), we dove into the Tmux C source code to divine the magical meanings behind each token in the Tmux custom-layout config string.  As a refresher, here's what a config string looks like for a window split into 4 panes:
 
-As much as I love Tmux, getting window splits set up for a new session is really clunky, so I set out to write a plug-in to make split set up simpler and more intuitive.
+{% highlight bash %}
+➜  ~  tmux list-windows
+1: zsh (3 panes) [178x51] [layout d5d2,178x51,0,0[178x25,0,0{89x25,0,0,26,88x25,90,0,27},178x25,0,26,28]] @12 (active)
+➜  ~
+{% endhighlight %}
+
+Our goal is to build a 
+
 
 ###Custom Layouts
 Out of the box, Tmux comes with 5 preset layouts for splitting up your screen: 
