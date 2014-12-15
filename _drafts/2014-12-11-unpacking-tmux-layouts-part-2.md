@@ -5,7 +5,7 @@ date:       2014-12-11
 summary:    "Building a better API for building custom layouts in Tmux. In Part 2, re-building the layout string in Ruby!"
 categories: tmux
 ---
-In [Part 1](), we dove into the Tmux C source code to divine the magical meanings behind each token in the Tmux custom-layout config string.  As a refresher, here's what a config string looks like for a window split into 4 panes:
+In [Part 1](), we dove into the Tmux C source code to divine the magical meanings behind each token in the Tmux custom-layout config string.  As a refresher, here's what a config string looks like for a window split into 3 panes:
 
 {% highlight bash %}
 ➜  ~  tmux list-windows
@@ -13,100 +13,145 @@ In [Part 1](), we dove into the Tmux C source code to divine the magical meaning
 ➜  ~
 {% endhighlight %}
 
-Our goal is to build a 
+Our ultimate goal is to be able to specify a screen layout via a format like YAML.  For example, for the layout above, we might use:
 
-
-###Custom Layouts
-Out of the box, Tmux comes with 5 preset layouts for splitting up your screen: 
-
-* even-horizontal
-* even-vertical
-* main-horizontal
-* main-vertical
-* tiled
-
-I've never found much use for these, and luckily, Tmux supports user-defined custom layouts as an alternative.  Instead of using a preset layout, you start with a single pane, and then use a series of command keys to split, adjust, and size each addtional pane. 
-
-Going through this process once or twice is fine, but it quickly gets old if you lose your session and need to start over.  So Tmux provides the ability to output a magical configuration string that you can copy (and later paste) to recreate a window's particular layout. Here's an example of a split window:
-
-![My helpful screenshot](/images/tmux-split.png)
-
-And here are the the values that tmux spits out when you type `tmux list-windows` for the above split:
-
-{% highlight bash %}
-➜  ~  tmux list-windows
-1: zsh* (3 panes) [178x51] [layout d5d2,178x51,0,0[178x25,0,0{89x25,0,0,26,88x25,90,0,27},178x25,0,26,28]] @12 (active)
-➜  ~
+{% highlight yaml %}
+layout:
+  pane: 50v
+  pane: 50v
+    pane: 50h
+    pane: 50h
 {% endhighlight %}
 
-Starting *after* the world 'layout', that's the custom-layout config string.  If you want to start-up Tmux with a similar window split, you'll need to copy that string and paste it into a new session:
+This should tell our program that we want two vertical (`v`) splits each at 50%, with the bottom split again in half horizontally.  To pass this information to Tmux, we'll need to build our own custom-layout string.
 
-{% highlight bash %}
-tmux select-layout "d5d2,178x51,0,0[178x25,0,0{89x25,0,0,26,88x25,90,0,27},178x25,0,26,28]"
+###The Layout as a Tree
+Here's what we know about how the mechanics of a Tmux window split:
+
+* To make a new pane in Tmux, you must "split" the current window into two smaller splits.
+* You can split a window either vertically (two boxes on top of one another) or horizontally (two boxes side by side).
+* New splits are always nested in within another split.  So any parent window has exactly two child splits. 
+* You don't have to split a pane equally, but the new panes must fill their parent completely. 
+
+The parent/child relationship of splits mean that a tree would work well as a data structure.  So we'll code a simple `Node` class to contain each pane split.
+
+ 
+{% highlight ruby %}
+class PaneNode
+  attr_accessor :width, :height, :x_offset, :y_offset, :parent, :children, :left_or_right
+
+  def initialize(width, height, x_offset=0, y_offset=0, left_or_right=nil)
+    @width = width
+    @height = height
+    @x_offset = x_offset
+    @y_offset = y_offset
+    @left_or_right = left_or_right
+    @children = []
+  end
+...
+
 {% endhighlight %}
 
-Having to cut-and-paste this string seems very... un-Tmuxy.  Wouldn't it be great if there was a more intuitive way to set up panes?
+Then, when we split a window we'll simply add a new child node to the parent split, and adjust its dimensions and offsets accordingly.
 
-The first step is to figure out how Tmux reads this custom layout configuration string.  Unfortunately, the meaning of these values is completely undocumented.  So we'll have to take a detour into the Tmux source!
+{% highlight ruby %}
+def split_vertically(percentage)
+  first_child_height = ((@height - (@height * percentage)).to_i)
+  second_child_height = ((@height - first_child_height).to_i)
+  first_child = PaneNode.new(@width, first_child_height, 0, 0, :left)
+  second_child = PaneNode.new(@width, second_child_height, 0, 0, :right)
 
-###The Checksum
-Here's the config string again with the first token highlighted:
+  add([first_child, second_child])
 
-<code>
-<span style="font-weight: bold; color: red;">d5d2,</span>178x51,0,0[178x25,0,0{89x25,0,0,26,88x25,90,0,27},178x25,0,26,28]
-</code>
+  first_child.x_offset = first_child.parent.x_offset 
+  second_child.x_offset = second_child.parent.x_offset 
 
-We can intuit some of these values just by how they are formatted.  For instance, `178x51` is almost certainly the size of my screen (that is, 178 columns wide by 51 rows/line tall). But that first value is pretty mysterious.  It looks to be some sort of hex value, and it turns out its a checksum of the rest of the string.  Here's the relevant code from the Tmux source:
-
-{% highlight c %}
-/* Calculate layout checksum. */
-u_short
-layout_checksum(const char *layout)
-{
-  u_short csum;
-
-  csum = 0;
-  for (; *layout != '\0'; layout++) {
-    csum = (csum >> 1) + ((csum & 1) << 15);
-    csum += *layout;
-  }
-  return (csum);
-}
+  first_child.y_offset = first_child.parent.y_offset 
+  second_child.y_offset = second_child.parent.y_offset + second_child_height 
+end
 {% endhighlight %}
 
-Checksums are typically used to validate the integrity of a packet of data (often when it's being sent over the wire and it might be corrupted along the way).  Here, the hexadecimal value `d5d2` corresponds to everything after the first comma.  It's calculated by iterating through the string character by character (or bit by bit).  As it moves through the string it applies a series of [bitwise operators](http://www.cprogramming.com/tutorial/bitwise_operators.html) and returns a hexadecimal value.  
+Next up, a really long and gnarly method to paramerterize the tree:
 
-So if we make any changes to the layout string, we'll need to generate a new checksum that matches the new string. We'll save that for later, but we can cross that token off and move on to the rest.
+{% highlight ruby %}
+def tree_as_string(list = [], tree_params = [], brackets = [])
+  # Start string with width x height and offset for root node
+  if tree_params.empty?
+    tree_params << self.params
+  end
+  unless children.empty?
+    children.each do |child|
+      list << child
+      if tree_params.count != 1 && invisible_pane?
+        tree_params << ","
+      elsif child.left_or_right == :left
+        #if a child and parent have the same width, then it's being
+        #split vertically.  Tmux indicates vertical splits
+        #with square brackets.
+        if (child.width == child.parent.width)
+          tree_params << "["
+          brackets << "]"
+        #otherwise, it's a horizontal split, show that with a curly 
+        #brace
+        else
+          tree_params << "{"
+          brackets << "}"
+        end
+      end
+      #if a pane splits in the same direction as its parent, then
+      #don't print it (just a weird tmux thing).
+      unless child.invisible_pane?
+        tree_params << child.params
+      end
+      #just use 00 for the pane id - tmux throws this away
+      #when using a layout string for building a new layout
+      if child.window_pane?
+        tree_params << ",00"
+      end
+      #If it's a leaf node, then close the brackets
+      if (child.left_or_right == :right) &&
+         (child.children.empty?)
+        tree_params << brackets.pop
+      end
+      #keep recursing through the tree, passing any values
+      #for the three_params or brackets that its collected
+      #along the way
+      child.tree_as_string(list, tree_params, brackets)
+    end
+    #Remember to close any remaining brackets or braces.
+    tree_params << brackets.pop
+  end
+  tree_params.join 
+  end
+{% endhighlight %}
 
-###The Rest
-Here's our config string again with the next group of relevant values highlighted:
+This long method builds the custom layout string token by token by recursing through the tree containing all of the node splits.  
 
-<code>
-d5d2,<span style="font-weight: bold; color: red;">178x51,0,0</span>[178x25,0,0{89x25,0,0,26,88x25,90,0,27},178x25,0,26,28]
-</code>
+Long methods like this violate the [single responsibility principle]() of good OO design, but in this case it's pretty unavoidable.  There are some tricky edge cases and rules on how Tmux parses the custom layout string.  Much of the code is simply adding brackets or curly braces in the correct places (and making sure they are closed appropriately, as well).
 
-The next value after the checksum (`178x51`) corresponds to the size of the window that Tmux is running in (columns x rows). And the two numbers after that (`0,0`) are the `x` and `y` offset values.  The offsets tell tmux where on the screen to start drawing the window, starting in the upper left corner.  
+Finally, we need to calculate a checksum of the parameters and prepend it (in hexadecimal) to the front of the final string.
 
-<code>
-d5d2,178x51,0,0<span style="font-weight: bold; color: red;">[178x25,0,0</span>{89x25,0,0,26,88x25,90,0,27},178x25,0,26,28]
-</code>
+{% highlight ruby %}
+class CheckSum
+  attr_accessor :config_string
 
-Moving down the string, we bump into a `[`.  You'll see both curly-braces and square-brackets used in Tmux's layout config string. The square bracket means an "up/down" layout (or draw a horizontal split across the screen).  So after the first bracket, Tmux is going to split the screen into a window 178 columns wide and 25 rows high (with an offset of `0,0`, starting in the upper left).
+  def initialize(config_string)
+    @config_string = config_string
+  end
 
-<code>
-d5d2,178x51,0,0[178x25,0,0<span style="font-weight: bold; color: red;">{89x25,0,0,26,88x25,90,0,27}</span>,178x25,0,26,28]
-</code>
+  def csum
+    csum = 0
+    @config_string.each_char do |character|
+      character = character.ord
+      csum = (csum >> 1) + ((csum & 1) << 15);
+      csum += character 
+    end
+    csum.to_s(16)
+  end
+end
+{% endhighlight %}
 
-Next is `{89x25,0,0,26,88x25,90,0,27}` which means "draw two vertical splits inside this first split." Each split is roughly the same size (`89x25` and `88x25`, respectively) and the second split has an offset `90` columns to the right.  The last number in each series (`26` and `27`) is an id used by tmux to keep track the various terminals opened up.  Tmux throws this away when it's parsing the string and setting up a new layout.
+This code mimics the checksum written in the C source. The main `csum` method iterates through the final string character by character, shifts some bits around, then outputs a final checksum value in hex.  We'll append this to the front of the string and BOOM! we have a valid configuration string for any custom layout we desire.  
 
-<code>
-d5d2,178x51,0,0[178x25,0,0{89x25,0,0,26,88x25,90,0,27},<span style="font-weight: bold; color: red;">178x25,0,26,28]</span>
-</code>
+This project was a fun dive into reading C and outputting the values of a tree into a complex string. I also learned how to include matching brackets into a string by pushing (and popping) them on and off an array.
 
-Finally, outside the closing `}`, we have the other half of the horizontal split.  It's offset 26 rows from the top of the screen.  Again, we can throw away the final value (`28`) as it won't be used when setting up a new session.         
-
-###Gotchas
-You'll need to open up the correct number of panes *before* you can send a custom layout string to Tmux. And remember, if you try to edit the string without generating a new checksum, Tmux will reject it.
-
-###Up Next
-Now that we know how Tmux parses the layout string, we can start down the road of automating this process.  
