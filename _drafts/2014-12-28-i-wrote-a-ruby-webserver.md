@@ -43,24 +43,24 @@ The core of my webserver is a simple REPL (Read Evaluate Print Loop) that sits o
   end
 {% endhighlight %}
 
-###A HTTP Request/Response Cycle
+###An HTTP Request/Response Cycle
 In my server, I'm letting Ruby's `TCPServer` handle the encoding and decoding of the TCP socket connection.  But since we're dealing with a web browser, we know that we'll need to handle and parse HTTP requests.  In most simple terms, here's an HTTP lifecycle for a GET request:
 
-1. The browser issues an HTTP request via a TCP socket connection to our IP address.  Assuming our server is up and running its listening loop (above), it will accept the connection and open up a socket for two way communication.
+* The browser issues an HTTP request via a TCP socket connection to our IP address.  Assuming our server is up and running, it will accept the connection and open up a socket for two way communication.
 
-2. Once the browser confirms a connection, it sends the request. For example:
+* Once the browser confirms a connection, it sends the request. For example:
 
-{% highlight ruby %}
+{% highlight html %}
 GET /index.html HTTP/1.1
 Host: www.example.com
 User-Agent: Mozilla/5.0 
 [blank line here]
 {% endhighlight %}
 
-3. We'll need to parse the above request, extracting the HTTP verb ('GET' in this case) and the file it's requesting from the server.  The remainder of the request contains the headers, which denote various metadata about the connection.
+* We'll need to parse the above request, extracting the HTTP verb ('GET' in this case) and the file it's requesting from the server.  The remainder of the request contains the headers, which denote various metadata about the connection.
 
-4. Finally, our server should respond in kind along with the contents of the file and then close the connection. For example:
-{% highlight ruby %}
+* Finally, our server should respond in kind along with the contents of the file and then close the connection. For example:
+{% highlight html %}
 HTTP/1.1 200 OK
 Content-Type: text/plain
 Content-Length: 130
@@ -68,10 +68,10 @@ Connection: close
 [blank line here]
 {% endhighlight %}
 
-Let's dive into steps 3 and 4.
+Let's dive into the last two steps.
 
 ###Parsing the Request
-Once the socket connectdion is open between the two computers, we'll need to extract the HTTP verb from the initial request. 
+Once the socket connection is open between the two computers, we'll need to extract the HTTP verb from the initial request. 
 
 {% highlight ruby %}
   def verb_and_header(socket)
@@ -93,7 +93,7 @@ Once the socket connectdion is open between the two computers, we'll need to ext
   end
 {% endhighlight %}
 
-Since we know how a HTTP/1.1 request will be formatted, we know the http verb will be the first word in the first line, and the requested file will be the following string. Following that will the header, which we parse and store as key/value pairs in a hash.
+Since we know how a HTTP/1.1 request will be formatted, we know the http verb will be the first word in the first line, and the requested file will be the following string. Following that will be the header, which we parse and store as key/value pairs in a hash.
 
 ###Responding to the Request
 Next, back in our REPL we'll need to process the HTTP verb and respond. 
@@ -165,7 +165,7 @@ The Node.js toolkit offers an alternative architecture that eliminates this "wai
 This leads me to...
 
 ###Next: Event-Based Programming with EventMachine
-Similar to Node.js, Ruby has its own event-based programming library in `EventMachine`.  There are a few web servers built on top of `EventMachine` (Thin being perhaps the most widely used).  It's not really fair to compare Node to Thin, as Rails doesn't enforce "all I/O via callbacks" rule, but I'm interested in exploring event-based programming as an alternative to Rails' threaded architecture.
+Similar to Node.js, Ruby has its own event-based programming library in `EventMachine`.  There are a few web servers built on top of `EventMachine` (Thin being perhaps the most widely used).  It's not really fair to compare Node to Thin, as Rails doesn't enforce an "all I/O via callbacks" rule, but I'm interested in exploring event-based programming as an alternative to Rails' threaded architecture.
 
 In the end, waiting for I/O is what really slows down web apps, so that's where optimization can really shine.       
 
