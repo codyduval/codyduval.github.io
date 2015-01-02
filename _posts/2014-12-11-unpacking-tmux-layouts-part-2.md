@@ -26,14 +26,14 @@ layout:
 This should tell our program that we want two vertical (`v`) splits each at 50%, with the bottom split again in half horizontally.  To pass this information to Tmux, we'll need to build our own custom-layout string.
 
 ###The Layout as a Tree
-Here's what we know about how the mechanics of a Tmux window split:
+Here's what we know about the mechanics of a Tmux window split:
 
 * To make a new pane in Tmux, you must "split" the current window into two smaller splits.
 * You can split a window either vertically (two boxes on top of one another) or horizontally (two boxes side by side).
 * New splits are always nested in within another split.  So any parent window has exactly two child splits. 
-* You don't have to split a pane equally, but the new panes must fill their parent completely. 
+* You're not required to split a pane equally, but together, the new panes must fill their parent completely. 
 
-The parent/child relationship of splits mean that a tree would work well as a data structure.  So we'll code a simple `Node` class to contain each pane split.
+The parent/child relationship of splits mean that a tree would work well as a data structure.  So we'll code up a simple `Node` class to contain each pane split.
 
  
 {% highlight ruby %}
@@ -125,9 +125,9 @@ def tree_as_string(list = [], tree_params = [], brackets = [])
   end
 {% endhighlight %}
 
-This long method builds the custom layout string token by token by recursing through the tree containing all of the node splits.  
+This long method builds the custom layout string token-by-token by recursing through the tree containing all of the node splits.  
 
-Long methods like this violate the [single responsibility principle]() of good OO design, but in this case it's pretty unavoidable.  There are some tricky edge cases and rules on how Tmux parses the custom layout string.  Much of the code is simply adding brackets or curly braces in the correct places (and making sure they are closed appropriately, as well).
+A long method like this violates the good rule of OO design that a method should only do one thing, but in this case it's pretty unavoidable.  There are some tricky edge cases and rules on how Tmux parses the custom layout string.  Much of the code is simply adding brackets or curly braces in the correct places (and making sure they are closed appropriately, as well).
 
 Finally, we need to calculate a checksum of the parameters and prepend it (in hexadecimal) to the front of the final string.
 
