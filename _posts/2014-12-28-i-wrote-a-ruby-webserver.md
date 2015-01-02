@@ -164,8 +164,10 @@ The Node.js toolkit offers an alternative architecture that eliminates this "wai
 
 This leads me to...
 
-###Next: Event-Based Programming with EventMachine
+###Next: Concurrency via Event Based Programming or the Actor Model
 Similar to Node.js, Ruby has its own event-based programming library in `EventMachine`.  There are a few web servers built on top of `EventMachine` (Thin being perhaps the most widely used).  It's not really fair to compare Node to Thin, as Rails doesn't enforce an "all I/O via callbacks" rule, but I'm interested in exploring event-based programming as an alternative to Rails' threaded architecture.
+
+Celluloid also offers a framework for concurrency via the Actor model.  I'm going to explore this next.
 
 In the end, waiting for I/O is what really slows down web apps, so that's where optimization can really shine.       
 
