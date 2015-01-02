@@ -5,7 +5,7 @@ date:       2014-12-11
 summary:    "Building a better API for building custom layouts in Tmux. In Part 2, re-building the layout string in Ruby!"
 categories: tmux
 ---
-In [Part 1](), we dove into the Tmux C source code to divine the magical meanings behind each token in the Tmux custom-layout config string.  As a refresher, here's what a config string looks like for a window split into 3 panes:
+In [Part 1]({% post_url 2014-12-08-unpacking-tmux-layouts %}), we dove into the Tmux C source code to divine the magical meanings behind each token in the Tmux custom-layout config string.  As a refresher, here's what a config string looks like for a window split into 3 panes:
 
 {% highlight bash %}
 ➜  ~  tmux list-windows
