@@ -43,7 +43,7 @@ The core of my webserver is a simple REPL (Read Evaluate Print Loop) that sits o
   end
 {% endhighlight %}
 
-###An HTTP Request/Response Cycle
+###The HTTP Request/Response Cycle
 In my server, I'm letting Ruby's `TCPServer` handle the encoding and decoding of the TCP socket connection.  But since we're dealing with a web browser, we know that we'll need to handle and parse HTTP requests.  In most simple terms, here's an HTTP lifecycle for a GET request:
 
 * The browser issues an HTTP request via a TCP socket connection to our IP address.  Assuming our server is up and running, it will accept the connection and open up a socket for two way communication.
