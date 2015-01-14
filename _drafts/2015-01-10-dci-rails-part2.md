@@ -5,79 +5,141 @@ date:       2015-01-10
 summary:    "The pros & cons of DCI inside Rails"
 categories: rails
 ---
-Inheritance.  Encapsulation.  Composition.  Message Passing.  Object Oriented programming and its tenets have become so ubiquitous in modern programming that for many, it is the ONLY way to program.  One of my goals at Hacker School was to try looking at programming problems through a functional lens.  Ultimately, my hope is that some functional concepts will bleed their way into my Ruby programming.
+Head over to [Part 1]({% post_url 2015-01-03-dci-rails-part-1 %}) for a summary of the core concepts behind the Data, Context, & Interaction architectural pattern.  Below is how I implemented DCI in Rails, and the pros and cons that come with it.  
 
-###Learning Clojure
-I spent my first week at Hacker School learning the ins-and-outs of Clojure.  Why Clojure?  1) It has a (relatively) small API to learn, and 2) there are a surprising number of "Clojurists" at Hacker School. "Do things at Hacker School that would be a lot harder somewhere else," was one of the first bits of advice given to me on Day 0 of Hacker School.  Having a room full of Clojure experts to pair with flattened the initial learning curve considerably.
+###Start with a Use Case
+For this experiment, we'll build an application to manage sign-ups at a play space.  In DCI, Contexts encapsulate a single use case.  For our app, we'll build our first DCI context around the following use case:
 
-###The Challenge: String Compression
-Learning to program functionally can be brain bending at first, so I chose small programming challenges to get started.  Here's my second program, which takes a string input from a user and compresses it by removing duplicate characters (eg., turn "aaaaaabbbcccdd" into "6a4b3c2d").     
+**Name:** Register Child for a Play Session
+**Summary:** A parent wants to sign their child up for a recurring session at a local play space. The system will show the parent the available play sessions for the current or future semesters, and the parent will be able to add their child to a single open session.
+**Preconditions:** A parent has previously signed up for an account in the system and is logged in. 
+**Description (Sunny Day Scenario):** 
+1. System presents parent list of open play sessions (organized by semester).
+2. Parent selects session
+3. Parent assigns child to session (unless parent only has one child, in which case this happens automatically).
+4. Parent confirms selection and is taken to checkout/payment flow.
+**Exceptions (Rainy Day Scenario):**
+* There are no open play sessions.
+* Parent's payment fails.
+**Postconditions:** On successful payment, system assigns child to play session and decreases open slots in session by one.
 
-{% highlight clojure %}
-(ns string-compressor.core
-  (:gen-class))
+This use-case nicely encapsulates a single DCI Context.  Our Context will consist of a single Ruby class, and this class will instantiate all of the objects needed to successfully complete the use case.   
+Before we dive into the details of let's look at it's public API which we access through a Rails controller.
 
-(defn get-string
-  "Gets a user inputted string to be compressed, for example
-  'aaaabbbcccdddeeef'. Returns the user inputted string."
-  [] 
-  (println "Enter string: ")
-  (let [string-input (read-line)] string-input))
+###A Logic-less Controller
+Since this is an exercise in "pure" DCI, we'll apply some strict rules to the rest of the app.  Our controllers only concern will be  managing HTTP requests - no business logic or database access.   
 
-(defn split-by-like-chars
-  "Take a user inputted string and split into a list of lists of 
-  similar characters. Eg: ((aaa) (bbb) (ccc) (dd) (ee) (f))." 
-  [user-string]
-  (partition-by identity user-string))
+{% highlight ruby %}
+  class SessionRegistrationController < ApplicationController
 
-(defn count-chars-by-group
-  "Take a list of character lists and count the number of characters
-  in each list.  Returns a list of maps of each character and its count,
-  eg ({a 3} {b 3} ...)."
-  [list-of-character-groups]
-  (flatten (map (fn [group] {(first group) (count group)})
-                list-of-character-groups)))
+    def home
+      @home = SessionRegistering.start(current_user.id)
+    end
 
-(defn hashmaps-of-counts-to-single-string
-  "Take a list of character counts and convert into a single string. 
-  Returns a string like 'a3b3c2d1'"
-  [list-of-hashmaps]
-  (apply str (flatten (map concat list-of-hashmaps))))
-
-(defn compare-compressed-to-original
-  "Compare the length of a compressed string to the original string and
-  return which ever is shorter."
-  [original compressed]
-  (if (< (count original) (count compressed)) original compressed))
-
-(defn compress-string
-  "Compresses a user entered string like 'aaaabbccddeeeeff' and returns 
-  a string that replaces repeat characters with counts, eg. 'a4b2c2d2e4f2'"
-  [user-string]
-  (-> user-string split-by-like-chars count-chars-by-group hashmaps-of-counts-to-single-string))
-  
-(defn go
-  []
-  (let [user-string (get-string)]
-    (let [compressed-string (compress-string user-string)]
-    (println "You said:" user-string)
-    (println "Compressed this is:" compressed-string)
-    (println "The optimal compressed string is:" (compare-compressed-to-original user-string compressed-string)))))
-
-(defn -main
-  []
-  (go))
+    def register
+      play_session = SessionRegistering.register(child_id: params[:child_id], play_session_id: params[:play_session_id])
+      if play_session
+        #yay - show a success flash message
+      else
+        #boo - show some sort of flash error
+      end
+    end
+  end
 {% endhighlight %}
 
-###Breaking It Down
-Compressing a string is a relatively simple task, but, like most programs, it still comes down to a series of steps.  To get started, I sketched these steps out:
+In accordance with Jim Gay's style (a Ruby/DCI proponent and author of Clean Ruby), we're using gerunds to name our context classes and our use case is encapsulated in a `SessionRegistering` context.  `SessionRegistering` has two public class methods: `SessionRegistering.start` and `SessionRegistering.register`. (We're using class level methods for readability and brevity, but these could easily be instance methods, too.)
 
-1. Get a string from the user.
-2. Split it up by similar characters.
-3. Count the characters in each group.
-4. Create a new string with the counts.
-5. Compare this compressed string to the original to see if it's shorter.
-6. Print the compressed string to the screen.
+`SessionRegistering.start` returns a hash with all the information Rails needs to build the initial view. And `SessionRegistering.register` takes the `POST` request on submit and returns the play session the parent just booked.
+
+With that, let's dive into the `SessionRegistering` class itself.
+
+###Casting Actors at Runtime
+DCI has a few conditions that can be tricky to implement in Ruby.  The first is that our general domain objects (for example `User`), don't contain any methods specific to a individual context.  Let's look at `SessionRegistering.start`:
+    
+{% highlight ruby %}
+  class SessionRegistering
+  
+    def initialize(current_user_id: nil,semester_id:  nil,
+                   child_user_id: nil, play_session_id:  nil,
+                   reg_id:  nil)
+      @child = find_person(child_user_id).extend(Child)
+      @parent = find_person(current_user_id).extend(Parent)
+      @semester = find_semester(semester_id).extend(SelectedSemester)
+      @play_session = find_play_session(play_session_id).extend(OpenPlaySession)
+    end
+
+    def self.start(current_user_id)
+      SessionRegistering.new(current_user_id: current_user_id).start
+    end
+    
+    def start(current_user_id)
+      SessionRegisteringHomePresenter.new(@parent, @parent.kids, open_semesters, sessions).home
+    end
+
+    #...more code ..#
+end
+{% endhighlight %}
+
+Setting aside the gnarly `#initialize` method for a second, lets look at how we are 'casting' behavior onto our domain objects within the Context class.  Our domain object `User`, is simply an empty class that inherits from `ActiveRecord`: 
+
+{% highlight ruby %}
+  class User < ActiveRecord::Base
+  end
+{% endhighlight %}
+
+Since we're playing by strict DCI rules, all user behaviors (including associations!) are cast inside the context.  We're doing this with Ruby's `Object#extend`, which adds behavior onto an object at run time.  In the case of our parent, we extend the `Parent` module onto the more general `User` object.    
+
+{% highlight ruby %}
+  class SessionRegistering
+
+    #... code ...#
+
+    module Parent
+      def kids
+        self.class.class_eval do
+          has_many :children, class_name: "User", foreign_key: "parent_id"
+        end
+        self.children
+      end
+
+    #... more code ...#
+
+    end
+{% endhighlight %}
+
+Now, `User` now has a `#kids` method which is simply adding a new association onto the (empty) `User` class.  I know, pretty ugly, right?  Remember, this is an experiment, so we'll tally up the pros and cons later.
+
+Similarly, we can `#extend` the `Child` module onto `User` to give the `User` object kid specific methods.
+
+{% highlight ruby %}
+  class SessionRegistering
+
+    #... code ...#
+      module Child
+        def parent 
+          self.class.class_eval do
+            belongs_to :parent, :class_name => "User", :foreign_key => :id, :primary_key => :parent_id
+          end
+          self.parent
+        end
+
+        def play_sessions
+          self.class.class_eval do
+            has_and_belongs_to_many :play_sessions
+          end
+          self.play_sessions
+        end
+      end
+
+    #... more code ...#
+
+    end
+{% endhighlight %}
+
+Is this a good thing?  Setting aside any architectural opinions for a moment, there are real performance issues with using Ruby's `#extend` to add behavior to an object at runtime.  By calling `#extend`, you obliterate Ruby's method cache, making method lookup *an order of magnitude* slower (you can see some data [here](http://tonyarcieri.com/dci-in-ruby-is-completely-broken)).  I haven't done any benchmarking of my own, but I'm not sure how much this would matter in the context of a Rails app where IO is by far the biggest bottleneck.
+
+Ruby 2.0 brought with it some other ways of adding behavior to an object at runtime, including `UnboundMethod` (used in the [casting gem](https://github.com/saturnflyer/casting)). `UnboundMethod` doesn't destroy the method cache, but has performance issues of its own.
+
 
 ###Start at the Bottom
 I've noticed that for most Clojure programs, the bottom of the program is a good place to start when trying to figure out what it does. In my program, I wrote a bunch of tiny functions to mirror the steps above.  Then, in the function below I string them together using Clojure's "thread-first" macro (the `->`).
