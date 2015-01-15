@@ -256,7 +256,7 @@ Setting aside any architectural opinions for a moment, there are real performanc
 
 Ruby 2.0 brought with it another way to add behavior to an object at runtime, via `UnboundMethod` (used in the [casting gem](https://github.com/saturnflyer/casting)). `UnboundMethod` has performance issues of its own, but it does provide a way to "unbind" functionality at the end of Context. 
 
-Other techniques to decorate an object include using `SimpleDelegator` or `Forwardable` at the class level.  But using these wrapper methods violate "strict" DCI you are not directly manipulating Data objects at runtime.
+Other techniques to decorate an object include using `SimpleDelegator` or `Forwardable` at the class level.  But using these wrapper methods violate "strict" DCI as you are not directly manipulating Data objects at runtime.
 
 ###Readability & Maintainability
 If implemented correctly, DCI should make it easier to maintain and understand an application's code.  Rails is built around the [Active Record](http://www.martinfowler.com/eaaCatalog/activeRecord.html) pattern and while that affords some conveniences, it has the unfortunate side effect of abstracting away what the application actually *does*.  By placing business logic in its own class, it's much easier to reason on the actual functionality of the app. And since business logic is separated from domain logic, changes to the code base should be easier, too.     
