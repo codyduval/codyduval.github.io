@@ -1,14 +1,14 @@
 ---
 layout:     post
-title:      "DCI in Rails, Part 2"
+title:      "DCI Flavored Rails, Part 2"
 date:       2015-01-10
-summary:    "The pros & cons of DCI inside Rails"
+summary:    "Part 2: The implementation, and its pros & cons."
 categories: rails
 ---
-Head over to [Part 1]({% post_url 2015-01-03-dci-rails-part-1 %}) for a summary of the core concepts behind the Data, Context, & Interaction architectural pattern.  Below is how I implemented DCI in Rails, and the pros and cons that come with it.  
+Head over to [Part 1]({% post_url 2015-01-03-dci-rails-part-1 %}) for a summary of the core concepts behind the Data, Context, & Interaction architectural pattern.  Below you'll find how I implemented DCI in Rails, and the pros and cons that come with it.
 
 ###Start with a Use Case
-For this experiment, we'll build an application to manage sign-ups at a play space for children.  In DCI, Contexts encapsulate a single use case.  For our app, we'll build our first DCI context around the following use case:
+For this experiment, we'll build an application to manage sign-ups at a play space for children.  In DCI, Contexts encapsulate a single use case.  We'll structure our first DCI context around the following use case:
 
 **Name:** Register Child for a Play Session
 
@@ -56,16 +56,17 @@ Since this is an exercise in "pure" DCI, we'll apply some strict rules to the re
   end
 {% endhighlight %}
 
-In accordance with Jim Gay's style (a Ruby/DCI proponent and author of Clean Ruby), we're using gerunds to name our context classes and our use case is encapsulated in a `SessionRegistering` context.
+In accordance with Jim Gay's style (a Ruby/DCI proponent and author of Clean Ruby), we'll use a gerund to name our context class and call it `SessionRegistering`. Another common convention is to append "Context" to a use case name (eg `SessionRegisterContext`).
 
-`SessionRegistering` has two public class methods: `SessionRegistering.start` and `SessionRegistering.register`. (We're using class level methods for readability and brevity, but these could easily be instance methods, too.)
+`SessionRegistering` has two public class-level methods.  These are our Context *triggers* in DCI parlance:
 
-`SessionRegistering.start` returns a hash with all the information Rails needs to build the initial view. And `SessionRegistering.register` takes the `POST` request on submit and returns the play session the parent just booked.
+* `SessionRegistering.start` returns a hash with all the information Rails needs to build the initial view. 
+* `SessionRegistering.register` takes the `POST` request on submit and returns the play session the parent just booked.
 
 With that, let's dive into the `SessionRegistering` class itself.
 
 ###Casting Actors at Runtime
-DCI has a few conditions that can be tricky to implement in Ruby.  The first is that our general domain objects (for example `User`), don't contain any methods specific to a individual context. As proof of that, here's our `User` class:  
+DCI has a few conditions that can be tricky to implement in Ruby.  The first is that our general domain Data objects (for example `User`), don't contain any methods specific to a individual context. As proof of that, here's our `User` class:  
 
 {% highlight ruby %}
   class User < ActiveRecord::Base
@@ -125,6 +126,8 @@ Since we're playing by strict DCI rules, all user behaviors (including associati
 {% endhighlight %}
 
 After extending `User` with the `Parent` module, `User` obtains the ability to query for its children via the `#kids` method. You'll see that we're adding a new association onto the `User` class.  I know, pretty ugly, right?
+
+One limitation of using `Object#extend` is that the new object is decorated for the life of the object - that is, there's no way to `unextend` it at the conclusion of the Context.  While this technically violates a "rule" of DCI, in practice it's not a huge deal in Rails as objects have relatively short life cycles.
 
 ###Roles Encapsulate Interactions
 If you look at the full DCI Context class below, it's pretty easy to divine exactly what's going on.  Instead of overloading the `User` class with methods that apply to both kids and parents, we encapsulate their interactions within a Role that is applied dynamically to the base class.   
@@ -249,12 +252,14 @@ Here's the complete DCI context class.
 We'll skip over the remainder of the class details for now to focus on what matters: Does DCI lead to more readable and maintainable code? Is it a Good Thing™?
 
 ###Performance Issues
-Setting aside any architectural opinions for a moment, there are real performance issues with using Ruby's `#extend` to add behavior to an object at runtime.  By calling `#extend`, you obliterate Ruby's method cache, making method lookup *an order of magnitude* slower (you can see some data [here](http://tonyarcieri.com/dci-in-ruby-is-completely-broken)).  I haven't done any benchmarking of my own, but I'm not sure how much this would matter in the context of a Rails app where IO is by far the biggest bottleneck.
+Setting aside any architectural opinions for a moment, there are real performance issues with using Ruby's `#extend` to add behavior to an object at runtime.  By calling `#extend` on an object, you obliterate Ruby's method cache for that object, making method lookup *an order of magnitude* slower (you can see some data [here](http://tonyarcieri.com/dci-in-ruby-is-completely-broken)).  I haven't done any benchmarking of my own, but I'm not sure how much this would matter in the context of a Rails app where IO is by far the biggest bottleneck.
 
-Ruby 2.0 brought with it some other ways of adding behavior to an object at runtime, including `UnboundMethod` (used in the [casting gem](https://github.com/saturnflyer/casting)). `UnboundMethod` doesn't destroy the method cache, but it has performance issues of its own.
+Ruby 2.0 brought with it another way to add behavior to an object at runtime, via `UnboundMethod` (used in the [casting gem](https://github.com/saturnflyer/casting)). `UnboundMethod` has performance issues of its own, but it does provide a way to "unbind" functionality at the end of Context. 
 
-###Readability
-One big win of DCI is to increase code cohesion by grouping similar concerns.  Rails is built around the [Active Record](http://www.martinfowler.com/eaaCatalog/activeRecord.html) pattern and while that affords some conveniences, it has the unfortunate side effect of abstracting away what the application actually *does*.  By placing business logic in its own class, it's much easier to reason on the actual functionality of the app.      
+Other techniques to decorate an object include using `SimpleDelegator` or `Forwardable` at the class level.  But using these wrapper methods violate "strict" DCI you are not directly manipulating Data objects at runtime.
+
+###Readability & Maintainability
+If implemented correctly, DCI should make it easier to maintain and understand an application's code.  Rails is built around the [Active Record](http://www.martinfowler.com/eaaCatalog/activeRecord.html) pattern and while that affords some conveniences, it has the unfortunate side effect of abstracting away what the application actually *does*.  By placing business logic in its own class, it's much easier to reason on the actual functionality of the app. And since business logic is separated from domain logic, changes to the code base should be easier, too.     
 
 ###Not Very DRY
 We've only implemented one Context, but what happens when another use case needs similar functionality to another?  How do we share functionality between Context classes?

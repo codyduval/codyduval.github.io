@@ -2,12 +2,15 @@
 layout:     post
 title:      "DCI Flavored Rails, Part 1"
 date:       2015-01-03
-summary:    "In Part 1, DCI in a Nutshell"
+summary:    "An experiment. In Part 1, DCI in a Nutshell."
 categories: rails
 ---
+>The problem with object-oriented languages is they’ve got all this implicit environment that they carry around with them. You wanted a banana but what you got was a gorilla holding the banana and the entire jungle.
+-- Joe Armstrong in _Coders at Work_ (via Mike Pack's [blog](http://mikepackdev.com/blog_posts/26-dci-role-injection-in-ruby))
+
 DCI (or Data, Context, and Interaction) is a proposed compliment to the widely adopted Model-View-Controller architectural pattern. DCI was invented by [Trygve Reenskaug](http://en.wikipedia.org/wiki/Trygve_Reenskaug), a Norwegian computer scientist who also just happens to be the father/author of MVC. Around 2011/2012, DCI received a fair amount of attention within the Ruby and Rails community as an antidote (or perhaps just an alternative) to the less-than-ideal "Fat Model / Skinny Controller" advice that was en vogue at the time.
 
-More recently, Jim Gay released his [Clean Ruby](http://clean-ruby.com/) book which goes into some detail on implementing DCI within Ruby.  After reading Clean Ruby, I was inspired to try DCI within the context of a Rails application.  As with anything in programming, there are always trade-offs.  Read on for a summary of DCI, or skip to [Part 2]() to see how I implemented it in Rails.
+More recently, Jim Gay released his [Clean Ruby](http://clean-ruby.com/) book which goes into some detail on implementing DCI within Ruby.  After reading Clean Ruby, I was inspired to try DCI within the context of a Rails application.  As with anything in programming, there are always trade-offs.  Read on for a summary of DCI, or skip to [Part 2]({% post_url 2015-01-10-dci-rails-part2 %}) to see how I implemented it in Rails.
 
 ###Why DCI?
 DCI has a number of goals, but at its core it aims to separate *being* from *doing* in a program.  Said another way, DCI provides an architecture for separating what a system is (the domain - which doesn't change very often) from what it does (the business processes and logic -  which are likely to change a lot over the lifetime of the app). Trygve Reenskaug probably said it best:   
@@ -29,4 +32,4 @@ Finally, C is for **Context,** which encapsulates the business logic of our appl
 
 In DCI, we are most concerned with the *Interactions* between data objects.  Those *Data* objects are cast as roles depending on the *Context* and specific business use case (more on that later).
 
-With that, read on to [Part 2]() to see my implementation of DCI inside Rails, and the pros/cons it brings.
+With that, read on to [Part 2]({% post_url 2015-01-10-dci-rails-part2 %}) to see my implementation of DCI inside Rails, and the pros/cons it brings.
