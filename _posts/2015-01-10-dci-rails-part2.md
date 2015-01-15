@@ -262,7 +262,7 @@ Other techniques to decorate an object include using `SimpleDelegator` or `Forwa
 If implemented correctly, DCI should make it easier to maintain and understand an application's code.  Rails is built around the [Active Record](http://www.martinfowler.com/eaaCatalog/activeRecord.html) pattern and while that affords some conveniences, it has the unfortunate side effect of abstracting away what the application actually *does*.  By placing business logic in its own class, it's much easier to reason on the actual functionality of the app. And since business logic is separated from domain logic, changes to the code base should be easier, too.     
 
 ###Not Very DRY
-We've only implemented one Context, but what happens when another use case needs similar functionality to another?  How do we share functionality between Context classes?
+We've only implemented one Context, but what happens when another use case (or Context) needs similar functionality?  How do we share functionality between Context classes?
 
 DCI has a concept called (perhaps confusingly) "habits", that are meant to contain recurring use case fragments that don't have a specific goal.  In my own implementation, I think moving model associations into the Context was a step too far - those will almost certainly be reused. I don't have any validations here, but you could argue that those are specific to the Context but would also be reused elsewhere. 
 
