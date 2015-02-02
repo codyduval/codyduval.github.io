@@ -3,8 +3,8 @@ title:       "codyduval#blog"
 email:       cody.duval@gmail.com
 author:      Cody Duval
 description: "Dear diary... "
-# baseurl:     "http://blog.codyduval.com"
-# url:         "http://blog.codyduval.com"
+baseurl:     "http://blog.codyduval.com"
+url:         "http://blog.codyduval.com"
 
 # Google analytics
 google_analytics:

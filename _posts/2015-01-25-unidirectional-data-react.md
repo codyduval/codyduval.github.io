@@ -1,16 +1,16 @@
 ---
 layout:     post
-title:      "One Way Data Binding is the New Black"
+title:      "Maintainable Web UI's with React.js"
 date:       2015-01-25
-summary:    ""
+summary:    "One-way data binding is the new black."
 categories: react
 ---
 Building responsive user interfaces for the web is hard. More specifically, keeping track of a UI's mutable state is hard. A single button click may trigger a cascade of changes throughout the view.  Keeping track of (and synchronizing) these changes can be very challenging in complex interfaces.  Prior to React's emergence a few years ago, observers and two-way data binding were our best solution to this tough problem.  React has shown that what's old is new again. One-way data binding is the new black. 
 
-I built a (relatively) simple UI using React to explore the pros (and cons) of React's uber features: immutablity, the virtual DOM, and unidirectional data flow.  I really enjoyed the process and I'm genuinely excited about building responsive UIs with React.
+I built a (relatively) simple UI using React to explore the pros (and cons) of React's uber features: immutability, the virtual DOM, and unidirectional data flow.  In this post, I detail the latter and how data "flows downhill" with React.
 
 ###Modeling Mutable State
-In the old days, we built "responsive" interfaces with technologies like Flash, CGI, or DHTML. Today, we'd use a big 'ole javascript framework like Ember or Angular.  Most modern javascript MVC frameworks use two-way data binding to manage appliction state: changes to the view update the data model, and changes to the data model update the view.  This works fine in simple applications, but it quickly becomes tangled in more complex (and long lived) programs.  Changes in one data model can trigger a change in another model, and it's easy to fall into the trap of using two-way bindings as a communication channel between components.
+In the old days, we built "responsive" interfaces with technologies like Flash, CGI, or DHTML. Today, we'd use a big 'ole javascript framework like Ember or Angular.  Most modern javascript MVC frameworks use two-way data binding to manage application state: changes to the view update the data model, and changes to the data model update the view.  This works fine in simple applications, but it quickly becomes tangled in more complex (and long lived) programs.  Changes in one data model can trigger a change in another model, and it's easy to fall into the trap of using two-way bindings as a communication channel between components.
 
 That's all well and good, but what's the alternative?  React's "big idea" was to make most of an application's state in the view immutable. So instead of updating and observing state for individual DOM nodes, React demands that a single parent component (ie a DOM node) contains all of the data for its sub children.
 
@@ -126,9 +126,9 @@ var RegistrationsList = React.createClass({
 
 {% endhighlight %}
 
-You'll see the `selectedSession` and `kids` data "rolling downhill" and pass through the `RegistrationsBox` component and into the `RegistrationsList`. Once there, the actual values are displayed within the JSX.  The important point here is that if any of these values change (due to a button click, or whatever), the entire tree will be re-rendered in React's virtual DOM.  Then, some fancy algorithims will compare the virtual DOM to the actual DOM, and force an update in a single batch.
+You'll see the `selectedSession` and `kids` data "rolling downhill" and pass through the `RegistrationsBox` component and into the `RegistrationsList`. Once there, the actual values are displayed within the JSX.  The important point here is that if any of these values change (due to a button click, or whatever), the entire tree will be re-rendered in React's virtual DOM.  Then, some fancy algorithms will compare the virtual DOM to the actual DOM, and force an update in a single batch.
 
-The completed UI is posted [on this gist]().  I've had a ton of fun playing with React and hope to use it more in the future.
+The completed UI is posted [on this gist](https://gist.github.com/codyduval/82d197e5295617d2ae02).  I've had a ton of fun playing with React and hope to use it more in the future.
 
 
 
